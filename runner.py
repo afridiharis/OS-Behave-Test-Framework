@@ -3,6 +3,7 @@ import pathlib
 import subprocess
 import argparse
 from datetime import datetime
+from pdb import set_trace
 
 
 def get_unique_run_id():
@@ -73,13 +74,16 @@ if __name__ == '__main__':
     # Since we will be using jenkins build to trigger then we can check if the tags parameter is passed in or not
     # Remove '--tags=' string if its None or empty
     tags_jenkins_parameter = os.environ.get('tags')
-    if tags_jenkins_parameter is None:
+    if tags_jenkins_parameter is None and os.environ.get('JENKINS_HOME') is not None:
         behave_options = behave_options.replace('--tags=', '')
 
     output_html = '' if not args.output_html else args.output_html
     if output_html != '':
         curr_file_path = pathlib.Path(__file__).parent.absolute()
-        dir_to_report = os.path.join(curr_file_path, 'reports/behave-report.html')
+        dir_to_report = os.path.join(curr_file_path, 'reports/')
+        if not os.path.exists(dir_to_report):
+            os.mkdir(dir_to_report)
+        dir_to_report = dir_to_report + 'behave-report.html'
         # output_json = f'-f json.pretty -o reports/json-report.json'
         output_html = f'-f html-pretty -o {dir_to_report} '
 
