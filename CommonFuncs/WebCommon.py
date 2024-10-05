@@ -97,14 +97,16 @@ def find_element(context, by, value, multiple=False):
 def accept_cookies(context):
     delay = 5  # seconds
     try:
-        # wait for cookie buttons to load as there's a delay to when "Let me choose" button appears
-        WebDriverWait(context.driver, delay).until(EC.visibility_of_element_located((By.XPATH, "//button[span[text()='Let me choose']]")))
+    # Wait for cookie settings buttons to finish styling and then click on accept button - as Let me choose button background color changes
+        WebDriverWait(context.driver, timeout=5).until(
+            lambda driver: find_element(context, By.XPATH, "//button[span[text()='Let me choose']]").value_of_css_property(
+                'background-color') == "rgba(69, 60, 144, 1)")
+
         print("Page is ready!")
 
     except TimeoutException:
         logging.error("Loading took too much time!")
-
-    accept = WebDriverWait(context.driver, delay).until(EC.element_to_be_clickable((By.XPATH, "//button[span[text()='Accept']]")))
+    accept = find_element(context,'id', "ccc-notify-accept")
     click(accept, context)
     time.sleep(0.5)
 
