@@ -1,124 +1,108 @@
+# Behave + Selenium POM Starter
 
-# BDD Test Automation Framework
+A clean, opinionated **BDD test automation framework** built with [Behave](https://behave.readthedocs.io/) and Selenium WebDriver, using the Page Object Model. Ships with a parameterised test runner, HTML reports with failure screenshots, and a Jenkins pipeline definition.
 
-Overview
-This project is a Behavior Driven Development (BDD) test automation framework built using Behave and Selenium WebDriver. 
+## What this framework demonstrates
 
-Page Object Model (POM)
-The framework uses the Page Object Model to maintain separation between test logic and page structure.
+- **Behave BDD** with Gherkin feature files and step definitions
+- **Page Object Model** for clean separation of test logic and page structure
+- **Parameterised runner** (`runner.py`) that accepts tags, output format, and a target test directory
+- **HTML reports** via [behave-html-pretty-formatter](https://github.com/bhavin192/behave-html-pretty-formatter) with screenshots automatically embedded on failures
+- **Jenkins pipeline** (`Jenkinsfile`) ready to drop into a freestyle or multi-branch job
+- **URL-agnostic** — point it at any web app by editing `config.ini`
 
-For outputting, logging debugs and info lines as well as screenshots are taken in case of test failures
+## Example target
 
-For Reporting a tool called `behave-html-pretty-formatter` is used to generate pretty HTML reports with screenshots attached for failing tests 
+The default `config.ini` points at [**osdatahub.os.uk**](https://osdatahub.os.uk/) — Ordnance Survey's public open-data portal — because it's a real, free-to-access website with a rich navigation tree (Home, API Dashboard, Download, Docs, Support, Plans) that exercises Page Objects properly rather than a toy login form. Swap in any other URL without touching framework code.
 
+## Quick start
 
+```bash
+git clone https://github.com/afridiharis/behave-selenium-pom-starter.git
+cd behave-selenium-pom-starter
 
-## Running the Tests Manually
+python3 -m venv env
+source env/bin/activate
+pip install -r requirements.txt
+```
 
-### **Prerequisites**
+### Run all tests
 
-Before you start, ensure that you have the following installed:
+```bash
+python runner.py --test_dir=Features
+```
 
-`Python 3.x`: Download Python
-`pip`: Python package manager (usually comes with Python)
+### Run a single tagged scenario
 
-**Installation Steps:**
+```bash
+python runner.py --behave_options='--tags=download_page' --test_dir=Features
+```
 
-#### Will require a vitualenv environment as a subshell is being opened to run the behave command in runner.py script
+### Run and generate an HTML report
 
-> *May have to start with `python3`*
-`python -m pip install virtualenv`
-`python -m virtualenv env_name`
-`source env_name/bin/activate`
+```bash
+python runner.py --behave_options='--tags=download_page' --output_html=yes --test_dir=Features
+```
 
-`pip install -r requirements.txt`
+Reports are written to `reports/behave-report.html`.
 
-*NOTE!* A `runner.py` file is used to run the tests and execute the behave command. 
+## Project layout
 
-To get help using runner.py run command `python runner.py -h`
+```
+.
+├── CommonFuncs/              # Shared helpers used by page objects
+│   ├── ConfigReader.py       # Reads config.ini
+│   └── WebCommon.py          # Selenium wrappers: waits, clicks, asserts, screenshots
+├── Features/                 # Gherkin feature files, step defs, page objects
+│   ├── environment.py        # Behave hooks (before/after scenario, failure screenshots)
+│   ├── OS_data_hub.feature   # Example scenarios against the OS Data Hub
+│   ├── Pages/                # Page Object Model classes
+│   │   ├── BasePage.py
+│   │   ├── HomePage.py
+│   │   ├── APIDashboardPage.py
+│   │   ├── DownloadPage.py
+│   │   ├── DocsPage.py
+│   │   ├── SupportPage.py
+│   │   └── PlansPage.py
+│   └── steps/                # Step definitions, one file per feature area
+├── behave.ini                # Behave formatter + reporter config
+├── config.ini                # Target URL + browser
+├── requirements.txt          # Python dependencies
+├── runner.py                 # Parameterised test runner
+└── Jenkinsfile               # Jenkins pipeline
+```
 
-1. **Run All Tests:**
+## Jenkins integration
 
-`python runner.py --test_dir=Features`
+The included `Jenkinsfile` uses `checkout scm` so it works with any Jenkins job that points at this repository — no hardcoded URLs. Parameterise your job with `tags` and `test_dir` string parameters to control which tests run. The pipeline:
 
-2. **Run Specific Tag:**
-To run tests with a specific tag, for example @download_page:
+1. Checks out the repo
+2. Creates a Python virtualenv and installs requirements
+3. Runs `runner.py` with the supplied tag filter
+4. Archives `reports/*.html` as build artefacts
 
-`python runner.py --behave_options='--tags=download_page' --test_dir=Features`
+## Configuration
 
-3. **Run Tests with HTML report out:**
-`python runner.py --behave_options='--tags=download_page' --output_html=yes --test_dir=Features`
+`config.ini` is the single source of truth for the target URL and browser:
 
+```ini
+[test config]
+url=https://osdatahub.os.uk/
+browser=chrome
+```
 
-## Details on the test reports produced by the test execution.
+Supported browsers: `chrome`, `firefox` (extend `Features/environment.py` to add more).
 
-When running against specific tag i.e. 
-`python runner.py --behave_options='--tags=download_page' --output_html=yes --test_dir=Features`
+## Requirements
 
-As shown in the screenshot below (local run) the scenario tagged with @download_page is run. The logs show all the elements being checked for and their locators and when they are found
-![passing tagged test](test_report_details/Screenshot.png)
+- Python 3.10+
+- Chrome or Firefox installed locally (Selenium 4 manages the driver binary automatically)
+- `pip`
 
+## Why this exists
 
-Running the same test in the html report generated output (console view):
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 06.19.50.png)
+Most open-source BDD framework examples target toy demo sites (SauceDemo, the-internet.herokuapp.com). This one targets a real, production, publicly-accessible website so the page objects and selectors reflect the kind of noise, timing, and structural variance you hit in real work.
 
-HTML report for the passing downloads page test (web view):
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 06.21.55.png)
+## License
 
-
-### Failing Tests - report details:
-
-> Can be viewed in browser directly - located in `test_report_details/behave-report-all-tests-two-fails.html`
-
-The captured will help facilitate me in finding and diagnosing the problem with expected versus actual outputs I can easily figure out why the assertions are failing
-Also more importantly by attaching the failing tests screenshots I know what happened around that time on the webpage
-
-The below test report shows all the scenarios run in around half a minute with two scenarios failing. Also showing the duration for each scenario
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 06.41.53.png)
-
-
-In here the attached screenshot of failing test can be seen
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 06.42.15.png)
-
-
-In this screenshot the test report gives you two options to view the Error Message and the Traceback both helping to diagnose and figure out the failures. In this case it was an assertion and clearly shows the expected and actual values being different
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 06.42.32.png)
-
-Another example of screenshot captured in helping find the issue is this where the page wasnt fully loaded before running the tests:
-![passing tagged test](test_report_details/Go_to_OS_Data_Homepage-element_not_visible.png)
-
-
-### Passing Tests - report details:
-
-> Can be viewed in browser directly - located in `test_report_details/behave-report-all-tests-passing.html`
-
-Locally all the captured logs are shown so you can keep a track and keep an eye on all the elements found and displayed:
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 07.07.56.png)
-
-
-
-On the html reporting all the tests are shown to pass and has their durations next to them
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 07.13.45.png)
-
-Here is the view of the local console without the `-o` output:
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 07.16.56.png)
-
-
-## Running Tests Via Build Process
-
-### Jenkins Freestyle Project
-In order to setup the freestyle project I needed to setup the shell execute and parameterize the test run so tags can be passed in successfully as well as tests directory
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 22.01.26.png)
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 22.03.31.png)
-
-Below can be seen a test run against a tag: @homepage being successfully run:
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 22.04.56.png)
-
-
-
-Screenshot below shows full test suite run built as a test job
-![passing tagged test](test_report_details/Screenshot 2024-10-02 at 21.58.14.png)
-
-
-
-
+MIT — see [LICENSE](LICENSE).

@@ -1,1 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+env_*/
+venv/
+.venv/
+.jenkins_venv/
+*.egg-info/
+.eggs/
+
+# Test reports and run artefacts
+reports/
+results_*/
+allure-results/
+allure-report/
+test_report_details/
+screenshots/
+
+# Selenium driver caches
+.wdm/
+chromedriver*
+geckodriver*
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+
+# OS
 .DS_Store
+Thumbs.db
